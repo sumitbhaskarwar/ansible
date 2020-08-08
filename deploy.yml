@@ -1,0 +1,24 @@
+---
+- hosts: appserver
+  become : true
+  tasks:
+
+  - name: Remove current war file /usr/local/tomcat/webapps/devops.war
+    file: path=/usr/local/tomcat/webapps/devops.war state=absent
+
+  - name: Wait until the webapp folder /usr/local/tomcat/webapps/devops is deleted
+    wait_for:
+      path: /usr/local/tomcat/webapps/devops
+      state: absent
+
+  - name: Copy the war file ROOT.war as devops.war to /usr/local/tomcat/webapps/
+    copy:
+      src: target/devops-1.war
+      dest: /usr/local/tomcat/webapps/devops.war
+      force: yes
+
+  - name: Add the firewall rules for tomcat port 9080
+    shell: |
+      firewall-cmd --zone=public --add-port=9080/tcp
+      firewall-cmd --zone=public --add-port=9080/tcp --permanent
+      firewall-cmd --reload
